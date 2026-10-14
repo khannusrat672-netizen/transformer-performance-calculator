@@ -4,6 +4,104 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
+st.markdown("""
+<style>
+/* Overall page */
+.stApp {
+    background: #f5f5f7;
+    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Main content spacing */
+.block-container {
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+    max-width: 1400px;
+}
+
+/* Main headings */
+h1 {
+    color: #1d1d1f !important;
+    font-weight: 750 !important;
+    letter-spacing: -1.2px;
+}
+
+h2, h3 {
+    color: #1d1d1f !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.4px;
+}
+
+/* Cards and metric containers */
+[data-testid="stMetric"] {
+    background: #ffffff;
+    border: 1px solid #e8e8ed;
+    border-radius: 18px;
+    padding: 22px 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.035);
+}
+
+[data-testid="stMetricLabel"] {
+    color: #6e6e73;
+    font-size: 0.92rem;
+}
+
+[data-testid="stMetricValue"] {
+    color: #0071e3;
+    font-weight: 700;
+}
+
+/* Input fields */
+[data-testid="stNumberInput"] input {
+    border-radius: 10px;
+}
+
+/* Buttons */
+.stButton > button {
+    background: #0071e3;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.55rem 1.2rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.stButton > button:hover {
+    background: #0077ed;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #ffffff;
+    border-right: 1px solid #e8e8ed;
+}
+
+/* Dividers */
+hr {
+    border-color: #e5e5ea;
+}
+
+/* Informational text */
+[data-testid="stCaptionContainer"] {
+    color: #6e6e73;
+}
+
+/* Charts */
+[data-testid="stPlotlyChart"],
+[data-testid="stImage"] {
+    border-radius: 16px;
+}
+
+/* Smooth appearance */
+* {
+    scroll-behavior: smooth;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.set_page_config(
     page_title="Transformer Performance Analyzer",
     page_icon="⚡",
