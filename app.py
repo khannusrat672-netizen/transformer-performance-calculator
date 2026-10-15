@@ -14,35 +14,73 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------------------- Premium light engineering UI ----------------------
-st.markdown("""
+# ---------------------- Premium adaptive engineering UI ----------------------
+if "ui_theme" not in st.session_state:
+    st.session_state["ui_theme"] = "Dark"
+
+THEMES = {
+    "Dark": {
+        "bg": "#080d18", "panel": "#101a2b", "panel2": "#142239", "border": "#273b58",
+        "text": "#eef5ff", "body": "#d3deef", "muted": "#9db0cb", "blue": "#54a6ff",
+        "cyan": "#35d6e8", "header": "rgba(8,13,24,.94)", "sidebar": "#0e192b",
+        "hero": "linear-gradient(115deg,#142d4d,#0d1a2c)", "input": "#111d30", "plot": "#101a2b",
+        "grid": "#344863", "pill": "rgba(53,214,232,.12)", "shadow": "rgba(0,0,0,.2)"
+    },
+    "Light": {
+        "bg": "#f4f7fb", "panel": "#ffffff", "panel2": "#edf4ff", "border": "#e0e7f0",
+        "text": "#172033", "body": "#344054", "muted": "#667085", "blue": "#2563eb",
+        "cyan": "#0891b2", "header": "rgba(244,247,251,.96)", "sidebar": "#ffffff",
+        "hero": "linear-gradient(115deg,#ffffff,#eaf3ff)", "input": "#ffffff", "plot": "#ffffff",
+        "grid": "#d7dfeb", "pill": "#e8f1ff", "shadow": "rgba(16,24,40,.045)"
+    }
+}
+T = THEMES[st.session_state["ui_theme"]]
+DARK = st.session_state["ui_theme"] == "Dark"
+plt.rcParams.update({
+    "figure.facecolor": T["plot"], "axes.facecolor": T["plot"],
+    "axes.edgecolor": T["grid"], "axes.labelcolor": T["body"],
+    "text.color": T["text"], "xtick.color": T["muted"], "ytick.color": T["muted"],
+    "grid.color": T["grid"], "legend.labelcolor": T["body"]
+})
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-:root { --ink:#172033; --muted:#667085; --line:#e6eaf0; --blue:#2563eb; --cyan:#0891b2; --surface:#ffffff; }
-html, body, [class*="css"] { font-family: Inter, "Segoe UI", sans-serif; }
-.stApp { background: #f5f7fb; color: var(--ink); }
-[data-testid="stHeader"] { background: rgba(245,247,251,.94); }
-.block-container { max-width: 1480px; padding-top: 1.35rem; padding-bottom: 2.8rem; }
-h1,h2,h3 { color:#172033 !important; letter-spacing:-.025em; }
-h1 { font-size:2.05rem !important; font-weight:800 !important; }
-h2 { font-size:1.35rem !important; font-weight:750 !important; }
-h3 { font-size:1.05rem !important; font-weight:700 !important; }
-p, label, li { color:#344054; }
-[data-testid="stSidebar"] { background:#ffffff; border-right:1px solid #e6eaf0; }
-[data-testid="stSidebar"] * { color:#344054; }
-[data-testid="stMetric"] { background:#fff; border:1px solid #e5eaf2; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px rgba(16,24,40,.035); min-height:105px; }
-[data-testid="stMetricLabel"] { color:#667085 !important; font-size:.82rem; }
-[data-testid="stMetricValue"] { color:#1d4ed8 !important; font-weight:800 !important; }
-div[data-testid="stVerticalBlockBorderWrapper"] { background:#fff; border:1px solid #e5eaf2; border-radius:17px; padding:1rem; }
-.hero { background:linear-gradient(115deg,#ffffff,#edf5ff); border:1px solid #dce8fb; border-radius:22px; padding:24px 28px; margin-bottom:1.1rem; }
-.eyebrow { color:#2563eb; font-size:.75rem; letter-spacing:.14em; font-weight:800; text-transform:uppercase; }
-.hero-title { color:#14213d; font-size:2rem; line-height:1.15; font-weight:800; margin:.35rem 0 .55rem; }
-.hero-sub { color:#667085; font-size:1rem; max-width:850px; }
-.pill { display:inline-block; padding:5px 10px; border-radius:999px; background:#e8f1ff; color:#1d4ed8; font-size:.76rem; font-weight:700; margin-right:5px; }
-div.stButton > button, div.stDownloadButton > button { border-radius:10px; font-weight:650; border:1px solid #d0d9e8; }
-div.stButton > button[kind="primary"] { background:#2563eb; border-color:#2563eb; }
-hr { border-color:#e6eaf0; }
-.small-muted { color:#667085; font-size:.85rem; }
+:root {{ --bg:{T['bg']}; --panel:{T['panel']}; --panel2:{T['panel2']}; --border:{T['border']}; --text:{T['text']}; --body:{T['body']}; --muted:{T['muted']}; --blue:{T['blue']}; --cyan:{T['cyan']}; }}
+html, body, [class*="css"] {{ font-family: Inter, "Segoe UI", sans-serif; }}
+.stApp {{ background: radial-gradient(ellipse at 78% 0%, {('rgba(28,105,180,.17)' if DARK else 'rgba(37,99,235,.07)')}, transparent 35%), var(--bg); color:var(--text); }}
+[data-testid="stHeader"] {{ background:{T['header']}; }}
+.block-container {{ max-width:1500px; padding-top:1.5rem; padding-bottom:3rem; }}
+h1,h2,h3 {{ color:var(--text) !important; letter-spacing:-.03em; }}
+h1 {{ font-size:2.1rem !important; font-weight:800 !important; }}
+h2 {{ font-size:1.42rem !important; font-weight:750 !important; }}
+h3 {{ font-size:1.06rem !important; font-weight:700 !important; }}
+p, label, li, [data-testid="stMarkdownContainer"] {{ color:var(--body); }}
+[data-testid="stCaptionContainer"] {{ color:var(--muted); }}
+[data-testid="stSidebar"] {{ background:linear-gradient(180deg,{T['sidebar']},var(--bg)); border-right:1px solid var(--border); }}
+[data-testid="stSidebar"] * {{ color:var(--body); }}
+[data-testid="stMetric"] {{ background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:17px; padding:17px 18px; box-shadow:0 8px 26px {T['shadow']}; min-height:112px; transition:transform .18s ease,border-color .18s ease; }}
+[data-testid="stMetric"]:hover {{ transform:translateY(-2px); border-color:var(--blue); }}
+[data-testid="stMetricLabel"] {{ color:var(--muted) !important; font-size:.82rem; }}
+[data-testid="stMetricValue"] {{ color:var(--blue) !important; font-weight:800 !important; }}
+[data-testid="stMetricDelta"] {{ color:#18a879 !important; }}
+div[data-testid="stVerticalBlockBorderWrapper"] {{ background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:1rem; box-shadow:0 5px 20px {T['shadow']}; }}
+.hero {{ background:{T['hero']}; border:1px solid var(--border); border-radius:22px; padding:25px 28px; margin-bottom:1.1rem; box-shadow:0 14px 36px {T['shadow']}; }}
+.eyebrow {{ color:var(--cyan); font-size:.73rem; letter-spacing:.16em; font-weight:800; text-transform:uppercase; }}
+.hero-title {{ color:var(--text); font-size:2rem; line-height:1.15; font-weight:800; letter-spacing:-.04em; margin:.4rem 0 .55rem; }}
+.hero-sub {{ color:var(--muted); font-size:.96rem; max-width:900px; }}
+.pill {{ display:inline-block; padding:5px 10px; border-radius:999px; background:{T['pill']}; color:var(--blue); border:1px solid var(--border); font-size:.75rem; font-weight:700; margin-right:5px; margin-top:8px; }}
+div.stButton > button, div.stDownloadButton > button {{ border-radius:10px; font-weight:700; border:1px solid var(--border); transition:all .18s ease; }}
+div.stButton > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {{ background:linear-gradient(135deg,#1677ff,#00aeca); color:#fff !important; border-color:transparent; }}
+div.stButton > button:hover, div.stDownloadButton > button:hover {{ border-color:var(--blue); box-shadow:0 0 20px rgba(49,130,246,.16); }}
+input, textarea {{ background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; border-radius:10px !important; }}
+[data-baseweb="select"] > div {{ background:var(--panel); border-color:var(--border); border-radius:10px; }}
+[data-testid="stDataFrame"], [data-testid="stTable"] {{ border:1px solid var(--border); border-radius:12px; overflow:hidden; }}
+[data-testid="stExpander"] {{ background:var(--panel); border:1px solid var(--border); border-radius:13px; }}
+[data-testid="stAlert"] {{ border-radius:12px; }}
+hr {{ border-color:var(--border) !important; }}
+a {{ color:var(--blue) !important; }}
+.small-muted {{ color:var(--muted); font-size:.84rem; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -194,6 +232,8 @@ def pdf_report(report_rows, notes):
 # ---------------------- Navigation ----------------------
 with st.sidebar:
     st.markdown("## ⚡ GRIDLAB")
+    st.caption("POWER SYSTEMS · ANALYTICS")
+    st.selectbox("APPEARANCE", ["Dark", "Light"], key="ui_theme", help="Switch the interface between dark and light mode. Changes apply immediately.")
     st.caption("TRANSFORMER ANALYTICS")
     st.markdown("---")
     page = st.radio("WORKSPACE", [
