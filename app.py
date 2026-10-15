@@ -1,572 +1,423 @@
 import math
-from typing import Any
+from io import BytesIO
+from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import streamlit as st
 
-
 st.set_page_config(
-    page_title="Transformer Performance Analysis Calculator",
+    page_title="GridLab | Transformer Analyzer",
     page_icon="⚡",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-
-
-# ---------- Premium dark engineering dashboard ----------
+# ---------------------- Premium light engineering UI ----------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-:root {
-  --bg:#080d18; --panel:#101a2b; --panel2:#142239; --border:#273b58;
-  --text:#eef5ff; --muted:#9db0cb; --blue:#54a6ff; --cyan:#35d6e8;
-}
+:root { --ink:#172033; --muted:#667085; --line:#e6eaf0; --blue:#2563eb; --cyan:#0891b2; --surface:#ffffff; }
 html, body, [class*="css"] { font-family: Inter, "Segoe UI", sans-serif; }
-.stApp {
-  background: radial-gradient(ellipse at 78% 0%, rgba(28,105,180,.18), transparent 34%), var(--bg);
-  color: var(--text);
-}
-[data-testid="stHeader"] { background: rgba(8,13,24,.94); }
-.block-container { max-width: 1500px; padding-top: 1.7rem; padding-bottom: 3rem; }
-h1,h2,h3 { color: #f2f7ff !important; letter-spacing: -.035em; }
-h1 { font-size: 2.15rem !important; font-weight: 800 !important; }
-h2 { font-size: 1.45rem !important; font-weight: 750 !important; }
-h3 { font-weight: 700 !important; }
-p, label { color: #d3deef; }
-[data-testid="stCaptionContainer"] { color: var(--muted); }
-[data-testid="stSidebar"] {
-  background: linear-gradient(180deg,#0e192b 0%,#091220 100%);
-  border-right: 1px solid var(--border);
-}
-[data-testid="stSidebar"] * { color: #dce8fa; }
-[data-testid="stMetric"] {
-  background: linear-gradient(145deg,rgba(21,36,59,.98),rgba(13,23,39,.98));
-  border: 1px solid #2a405f; border-radius: 17px; padding: 18px 19px;
-  box-shadow: 0 9px 28px rgba(0,0,0,.18); min-height: 116px;
-  transition: transform .18s ease,border-color .18s ease;
-}
-[data-testid="stMetric"]:hover { transform: translateY(-2px); border-color:#398fe8; }
-[data-testid="stMetricLabel"] { color:#a4b6d0 !important; font-size:.83rem; }
-[data-testid="stMetricValue"] { color:var(--blue) !important; font-weight:800 !important; }
-[data-testid="stMetricDelta"] { color:#55dfb0 !important; }
-div[data-testid="stVerticalBlockBorderWrapper"] {
-  background: rgba(16,26,43,.72); border:1px solid var(--border);
-  border-radius:18px; padding:1rem;
-}
-.hero {
-  background:linear-gradient(115deg,rgba(20,45,77,.98),rgba(13,26,44,.96));
-  border:1px solid #2c4a70; border-radius:22px; padding:25px 28px;
-  margin-bottom:1.1rem; box-shadow:0 14px 38px rgba(0,0,0,.18);
-}
-.kicker { color:#58d7eb; font-size:.73rem; font-weight:800; letter-spacing:.17em; text-transform:uppercase; }
-.hero-title { color:#f5f8ff; font-size:2rem; font-weight:800; letter-spacing:-.045em; margin:.35rem 0 .45rem; }
-.hero-sub { color:#b7c9e2; font-size:.96rem; margin:0; }
-.pill {
-  display:inline-block; background:rgba(53,214,232,.1); color:#74e5ef;
-  border:1px solid rgba(53,214,232,.32); border-radius:999px;
-  padding:5px 10px; font-size:.75rem; font-weight:700; margin-top:12px;
-}
-.stButton > button {
-  background:linear-gradient(135deg,#1677ff,#00aeca); color:white !important;
-  border:1px solid transparent; border-radius:11px; font-weight:700;
-  padding:.55rem 1rem; transition:all .2s ease;
-}
-.stButton > button:hover { box-shadow:0 0 22px rgba(49,130,246,.28); border-color:#55b6ff; }
-input, textarea {
-  background:#111d30 !important; color:#eff6ff !important;
-  border-color:#314765 !important; border-radius:10px !important;
-}
-[data-baseweb="select"] > div { background:#111d30; border-color:#314765; border-radius:10px; }
-hr { border-color:#293b55 !important; }
-[data-testid="stDataFrame"] { border:1px solid #2a3d59; border-radius:13px; overflow:hidden; }
-[data-testid="stExpander"] {
-  background:#101a2b; border:1px solid #293c58; border-radius:13px;
-}
-[data-testid="stAlert"] { border-radius:12px; }
-a { color:#6bb5ff !important; }
+.stApp { background: #f5f7fb; color: var(--ink); }
+[data-testid="stHeader"] { background: rgba(245,247,251,.94); }
+.block-container { max-width: 1480px; padding-top: 1.35rem; padding-bottom: 2.8rem; }
+h1,h2,h3 { color:#172033 !important; letter-spacing:-.025em; }
+h1 { font-size:2.05rem !important; font-weight:800 !important; }
+h2 { font-size:1.35rem !important; font-weight:750 !important; }
+h3 { font-size:1.05rem !important; font-weight:700 !important; }
+p, label, li { color:#344054; }
+[data-testid="stSidebar"] { background:#ffffff; border-right:1px solid #e6eaf0; }
+[data-testid="stSidebar"] * { color:#344054; }
+[data-testid="stMetric"] { background:#fff; border:1px solid #e5eaf2; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px rgba(16,24,40,.035); min-height:105px; }
+[data-testid="stMetricLabel"] { color:#667085 !important; font-size:.82rem; }
+[data-testid="stMetricValue"] { color:#1d4ed8 !important; font-weight:800 !important; }
+div[data-testid="stVerticalBlockBorderWrapper"] { background:#fff; border:1px solid #e5eaf2; border-radius:17px; padding:1rem; }
+.hero { background:linear-gradient(115deg,#ffffff,#edf5ff); border:1px solid #dce8fb; border-radius:22px; padding:24px 28px; margin-bottom:1.1rem; }
+.eyebrow { color:#2563eb; font-size:.75rem; letter-spacing:.14em; font-weight:800; text-transform:uppercase; }
+.hero-title { color:#14213d; font-size:2rem; line-height:1.15; font-weight:800; margin:.35rem 0 .55rem; }
+.hero-sub { color:#667085; font-size:1rem; max-width:850px; }
+.pill { display:inline-block; padding:5px 10px; border-radius:999px; background:#e8f1ff; color:#1d4ed8; font-size:.76rem; font-weight:700; margin-right:5px; }
+div.stButton > button, div.stDownloadButton > button { border-radius:10px; font-weight:650; border:1px solid #d0d9e8; }
+div.stButton > button[kind="primary"] { background:#2563eb; border-color:#2563eb; }
+hr { border-color:#e6eaf0; }
+.small-muted { color:#667085; font-size:.85rem; }
 </style>
 """, unsafe_allow_html=True)
 
+# ---------------------- Calculations ----------------------
+DEFAULTS = {
+    "rating_a": 100.0, "load_a": 75.0, "pf_a": 0.90, "core_a": 300.0, "cu_a": 1200.0,
+    "rating_b": 150.0, "load_b": 75.0, "pf_b": 0.90, "core_b": 420.0, "cu_b": 1800.0,
+}
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+def calculate(rating_kva, load_pct, pf, core_w, full_cu_w):
+    load = load_pct / 100.0
+    output_kw = rating_kva * load * pf
+    copper_w = full_cu_w * load**2
+    total_w = core_w + copper_w
+    output_w = output_kw * 1000
+    denom = output_w + total_w
+    efficiency = (output_w / denom * 100) if denom > 0 else None
+    max_load = math.sqrt(core_w / full_cu_w) * 100 if full_cu_w > 0 else None
+    return {
+        "rating_kva": rating_kva, "load_pct": load_pct, "pf": pf, "core_w": core_w,
+        "full_cu_w": full_cu_w, "output_kw": output_kw, "copper_w": copper_w,
+        "total_w": total_w, "total_kw": total_w / 1000,
+        "efficiency_pct": efficiency, "max_load_pct": max_load,
+        "input_kw": output_kw + total_w / 1000,
+    }
+
+def validate(values):
+    errs = []
+    if not math.isfinite(values["rating_kva"]) or values["rating_kva"] <= 0:
+        errs.append("Rated capacity must be greater than 0 kVA.")
+    if not math.isfinite(values["load_pct"]) or not 0 <= values["load_pct"] <= 200:
+        errs.append("Load percentage must be between 0% and 200%.")
+    if not math.isfinite(values["pf"]) or not 0 <= values["pf"] <= 1:
+        errs.append("Power factor must be between 0 and 1.")
+    if not math.isfinite(values["core_w"]) or values["core_w"] < 0:
+        errs.append("Core loss cannot be negative.")
+    if not math.isfinite(values["full_cu_w"]) or values["full_cu_w"] < 0:
+        errs.append("Full-load copper loss cannot be negative.")
+    return errs
+
+def get_transformer(letter):
+    suffix = letter.lower()
+    return {
+        "rating_kva": float(st.session_state[f"rating_{suffix}"]),
+        "load_pct": float(st.session_state[f"load_{suffix}"]),
+        "pf": float(st.session_state[f"pf_{suffix}"]),
+        "core_w": float(st.session_state[f"core_{suffix}"]),
+        "full_cu_w": float(st.session_state[f"cu_{suffix}"]),
+    }
+
+def as_results(values):
+    errors = validate(values)
+    return (None, errors) if errors else (calculate(**{
+        "rating_kva": values["rating_kva"], "load_pct": values["load_pct"],
+        "pf": values["pf"], "core_w": values["core_w"], "full_cu_w": values["full_cu_w"]
+    }), [])
+
+def make_sweep(values, loads):
+    rows = []
+    for load_pct in loads:
+        row = calculate(values["rating_kva"], float(load_pct), values["pf"], values["core_w"], values["full_cu_w"])
+        rows.append({"Load (%)": float(load_pct), "Output (kW)": row["output_kw"],
+                     "Copper loss (W)": row["copper_w"], "Total loss (W)": row["total_w"],
+                     "Efficiency (%)": row["efficiency_pct"]})
+    return pd.DataFrame(rows)
+
+def efficiency_plot(a, b, load_max):
+    loads = np.linspace(1, load_max, 200)
+    fig, ax = plt.subplots(figsize=(8, 4.1))
+    for label, values in [("Transformer A", a), ("Transformer B", b)]:
+        if values:
+            eff = [calculate(values["rating_kva"], float(x), values["pf"], values["core_w"], values["full_cu_w"])["efficiency_pct"] for x in loads]
+            ax.plot(loads, eff, linewidth=2.5, label=label)
+            m = math.sqrt(values["core_w"] / values["full_cu_w"]) * 100 if values["full_cu_w"] > 0 else None
+            if m is not None and 0 < m <= load_max:
+                ax.axvline(m, linestyle=":", alpha=.55)
+    ax.set_title("Efficiency vs. load", loc="left", fontweight="bold")
+    ax.set_xlabel("Load (%)"); ax.set_ylabel("Efficiency (%)")
+    ax.grid(True, alpha=.22); ax.legend(frameon=False)
+    fig.tight_layout()
+    return fig
+
+def loss_plot(a, b):
+    labels, core, copper = [], [], []
+    for label, values in [("Transformer A", a), ("Transformer B", b)]:
+        if values:
+            p = calculate(values["rating_kva"], values["load_pct"], values["pf"], values["core_w"], values["full_cu_w"])
+            labels.append(label); core.append(p["core_w"]); copper.append(p["copper_w"])
+    fig, ax = plt.subplots(figsize=(7, 4.1))
+    x = np.arange(len(labels))
+    ax.bar(x, core, label="Core loss")
+    ax.bar(x, copper, bottom=core, label="Copper loss")
+    ax.set_xticks(x, labels); ax.set_ylabel("Loss (W)")
+    ax.set_title("Loss breakdown at selected load", loc="left", fontweight="bold")
+    ax.grid(axis="y", alpha=.22); ax.legend(frameon=False)
+    fig.tight_layout()
+    return fig
+
+def pdf_report(report_rows, notes):
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+        styles = getSampleStyleSheet()
+        story = [Paragraph("Transformer Performance Analyzer", styles["Title"]),
+                 Paragraph(f"Generated: {datetime.now().strftime('%d %b %Y, %H:%M')}", styles["Normal"]),
+                 Spacer(1, 14), Paragraph("Calculated results from user-entered values", styles["Heading2"]), Spacer(1, 8)]
+        data = [["Parameter", "Transformer A", "Transformer B"]]
+        for key, label, fmt in [
+            ("output_kw", "Output power (kW)", "{:.3f}"),
+            ("copper_w", "Copper loss (W)", "{:.2f}"),
+            ("total_w", "Total loss (W)", "{:.2f}"),
+            ("efficiency_pct", "Efficiency (%)", "{:.3f}"),
+            ("max_load_pct", "Theoretical max-efficiency load (%)", "{:.2f}"),
+        ]:
+            row = [label]
+            for name in ["Transformer A", "Transformer B"]:
+                val = report_rows.get(name, {}).get(key)
+                row.append(fmt.format(val) if val is not None else "N/A")
+            data.append(row)
+        table = Table(data, colWidths=[245, 120, 120], repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#1D4ED8")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+            ("GRID", (0,0), (-1,-1), .4, colors.HexColor("#D0D5DD")),
+            ("BACKGROUND", (0,1), (-1,-1), colors.white),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#F2F6FC")]),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTSIZE", (0,0), (-1,-1), 8),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("TOPPADDING", (0,0), (-1,-1), 7), ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+        ]))
+        story.append(table); story.append(Spacer(1, 16))
+        story.append(Paragraph("Method and limitations", styles["Heading2"]))
+        story.append(Paragraph(notes, styles["BodyText"]))
+        story.append(Spacer(1, 8))
+        story.append(Paragraph("Formulas: Pout = rated kVA × load fraction × PF; copper loss = full-load copper loss × load fraction²; total loss = core loss + copper loss; efficiency = Pout / (Pout + total loss) × 100.", styles["BodyText"]))
+        doc.build(story)
+        return buf.getvalue()
+    except ImportError:
+        return None
+
+# ---------------------- Navigation ----------------------
 with st.sidebar:
     st.markdown("## ⚡ GRIDLAB")
     st.caption("TRANSFORMER ANALYTICS")
     st.markdown("---")
-    st.markdown("**WORKSPACE**")
-    st.markdown("▰  Performance overview")
-    st.markdown("▰  Transformer comparison")
-    st.markdown("▰  Loss analysis")
-    st.markdown("▰  Load sweep")
+    page = st.radio("WORKSPACE", [
+        "Overview", "Performance Calculator", "Comparison Studio",
+        "Load Analysis Lab", "Energy & Cost", "Reports", "Learn"
+    ], label_visibility="collapsed")
     st.markdown("---")
-    st.markdown("**MODEL STATUS**")
     st.success("Calculation engine ready")
-    st.caption("Steady-state estimate • SI units")
-    st.markdown("---")
-    st.caption("Transformer Performance Analyzer · v1.0")
+    st.caption("Steady-state estimate · SI units")
+    st.caption("Transformer Performance Analyzer · v2.0")
 
+st.markdown(f"""
+<div class="hero">
+  <div class="eyebrow">GRIDLAB / TRANSFORMER INTELLIGENCE</div>
+  <div class="hero-title">{page}</div>
+  <div class="hero-sub">A focused engineering workspace for estimating transformer performance, understanding losses, and comparing operating conditions.</div>
+  <div style="margin-top:14px"><span class="pill">Interactive analysis</span><span class="pill">SI units</span><span class="pill">Educational estimate</span></div>
+</div>
+""", unsafe_allow_html=True)
 
-DEFAULTS = {
-    "rating_a_kva": 100.0,
-    "load_a_pct": 75.0,
-    "pf_a": 0.90,
-    "core_a_w": 300.0,
-    "copper_a_w": 1200.0,
-    "rating_b_kva": 150.0,
-    "load_b_pct": 75.0,
-    "pf_b": 0.90,
-    "core_b_w": 420.0,
-    "copper_b_w": 1800.0,
-}
+raw_a, raw_b = get_transformer("A"), get_transformer("B")
+res_a, err_a = as_results(raw_a)
+res_b, err_b = as_results(raw_b)
+valid_a = res_a is not None
+valid_b = res_b is not None
 
-LOAD_LEVELS_PCT = np.arange(0, 201, 25, dtype=float)
-PLOT_LOAD_LEVELS_PCT = np.linspace(0, 200, 201)
+def transformer_form(letter, title):
+    suffix = letter.lower()
+    st.markdown(f"### {title}")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.number_input("Rated capacity (kVA)", min_value=0.1, max_value=100000.0, step=10.0, key=f"rating_{suffix}")
+        st.number_input("Load (%)", min_value=0.0, max_value=200.0, step=5.0, key=f"load_{suffix}")
+        st.number_input("Power factor", min_value=0.0, max_value=1.0, step=0.05, format="%.2f", key=f"pf_{suffix}")
+    with c2:
+        st.number_input("Core loss (W)", min_value=0.0, max_value=10000000.0, step=50.0, key=f"core_{suffix}")
+        st.number_input("Full-load copper loss (W)", min_value=0.0, max_value=10000000.0, step=100.0, key=f"cu_{suffix}")
 
+def show_metrics(result, prefix):
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric(f"{prefix} output power", f'{result["output_kw"]:.3f} kW')
+    c2.metric(f"{prefix} total losses", f'{result["total_kw"]:.3f} kW')
+    c3.metric(f"{prefix} efficiency", f'{result["efficiency_pct"]:.3f}%' if result["efficiency_pct"] is not None else "N/A")
+    c4.metric(f"{prefix} max-efficiency load", f'{result["max_load_pct"]:.1f}%' if result["max_load_pct"] is not None else "N/A")
 
-def calculate_performance(
-    rating_kva: float,
-    load_fraction: float,
-    power_factor: float,
-    core_loss_w: float,
-    full_load_copper_loss_w: float,
-) -> dict[str, Any]:
-    """Calculate transformer output, losses, efficiency, and optimum load."""
-    output_kw = rating_kva * load_fraction * power_factor
-    output_w = output_kw * 1000
-    copper_loss_w = full_load_copper_loss_w * load_fraction**2
-    total_loss_w = core_loss_w + copper_loss_w
-    denominator_w = output_w + total_loss_w
-
-    efficiency_pct = (
-        (output_w / denominator_w) * 100 if denominator_w > 0 else None
-    )
-
-    if full_load_copper_loss_w > 0:
-        max_efficiency_load_pct = (
-            math.sqrt(core_loss_w / full_load_copper_loss_w) * 100
-        )
-        max_efficiency_note = None
-    elif core_loss_w == 0:
-        max_efficiency_load_pct = None
-        max_efficiency_note = "Not defined when both losses are zero"
+if page == "Overview":
+    st.subheader("Performance snapshot")
+    if not valid_a and not valid_b:
+        st.warning("Enter valid transformer values in the Performance Calculator to begin.")
     else:
-        max_efficiency_load_pct = None
-        max_efficiency_note = "No finite optimum when copper loss is zero"
+        cols = st.columns(4)
+        if valid_a:
+            cols[0].metric("Transformer A efficiency", f'{res_a["efficiency_pct"]:.2f}%')
+            cols[1].metric("Transformer A total losses", f'{res_a["total_kw"]:.3f} kW')
+        if valid_b:
+            cols[2].metric("Transformer B efficiency", f'{res_b["efficiency_pct"]:.2f}%')
+            cols[3].metric("Transformer B total losses", f'{res_b["total_kw"]:.3f} kW')
+        left, right = st.columns([1.35, 1])
+        with left:
+            st.markdown("#### Efficiency profile")
+            fig = efficiency_plot(raw_a if valid_a else None, raw_b if valid_b else None, 200)
+            st.pyplot(fig, use_container_width=True); plt.close(fig)
+        with right:
+            st.markdown("#### Loss breakdown")
+            fig = loss_plot(raw_a if valid_a else None, raw_b if valid_b else None)
+            st.pyplot(fig, use_container_width=True); plt.close(fig)
+        st.info("Tip: use the Performance Calculator page to change input parameters. All pages use the same values.")
+    st.markdown("#### Workspace")
+    cards = st.columns(3)
+    for col, title, desc in [
+        (cards[0], "01 · Calculate", "Edit ratings, load, power factor and losses."),
+        (cards[1], "02 · Compare", "Compare performance indicators side by side."),
+        (cards[2], "03 · Export", "Download a results table or a report."),
+    ]:
+        with col:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.caption(desc)
 
-    return {
-        "output_kw": output_kw,
-        "output_w": output_w,
-        "copper_loss_w": copper_loss_w,
-        "core_loss_w": core_loss_w,
-        "total_loss_w": total_loss_w,
-        "efficiency_pct": efficiency_pct,
-        "max_efficiency_load_pct": max_efficiency_load_pct,
-        "max_efficiency_note": max_efficiency_note,
-    }
+elif page == "Performance Calculator":
+    st.markdown("Edit the values below. The results recalculate automatically.")
+    left, right = st.columns(2)
+    with left:
+        with st.container(border=True):
+            transformer_form("A", "Transformer A")
+    with right:
+        with st.container(border=True):
+            transformer_form("B", "Transformer B")
+    st.markdown("### Calculated results")
+    if err_a:
+        for e in err_a: st.error("Transformer A: " + e)
+    if err_b:
+        for e in err_b: st.error("Transformer B: " + e)
+    if valid_a:
+        show_metrics(res_a, "A")
+    if valid_b:
+        show_metrics(res_b, "B")
+    with st.expander("Show formulas and worked calculations"):
+        st.latex(r"P_{out}(kW)=S_{rated}(kVA)\\times L\\times PF")
+        st.latex(r"P_{cu}(W)=P_{cu,FL}\\times L^2")
+        st.latex(r"P_{loss}=P_{core}+P_{cu}")
+        st.latex(r"\\eta(\\%)=\\frac{P_{out}(W)}{P_{out}(W)+P_{loss}(W)}\\times100")
+        if valid_a:
+            st.markdown("**Transformer A worked values**")
+            st.write(f'Load fraction = {raw_a["load_pct"]:.1f}/100 = {raw_a["load_pct"]/100:.3f}')
+            st.write(f'Output power = {raw_a["rating_kva"]:.2f} × {raw_a["load_pct"]/100:.3f} × {raw_a["pf"]:.2f} = {res_a["output_kw"]:.3f} kW')
+            st.write(f'Copper loss = {raw_a["full_cu_w"]:.2f} × ({raw_a["load_pct"]/100:.3f})² = {res_a["copper_w"]:.2f} W')
+            st.write(f'Total losses = {raw_a["core_w"]:.2f} + {res_a["copper_w"]:.2f} = {res_a["total_w"]:.2f} W')
+            st.write(f'Efficiency = {res_a["efficiency_pct"]:.3f}%' if res_a["efficiency_pct"] is not None else "Efficiency is undefined at zero output and zero loss.")
 
-
-def validate_transformer_inputs(values: dict[str, float]) -> list[str]:
-    """Return user-readable input errors before any calculations are shown."""
-    errors: list[str] = []
-
-    if not math.isfinite(values["rating_kva"]) or values["rating_kva"] <= 0:
-        errors.append("Transformer rating must be greater than 0 kVA.")
-    if (
-        not math.isfinite(values["load_pct"])
-        or values["load_pct"] < 0
-        or values["load_pct"] > 200
-    ):
-        errors.append("Load percentage must be between 0% and 200%.")
-    if (
-        not math.isfinite(values["power_factor"])
-        or values["power_factor"] < 0
-        or values["power_factor"] > 1
-    ):
-        errors.append("Power factor must be between 0 and 1.")
-    if (
-        not math.isfinite(values["core_loss_w"])
-        or values["core_loss_w"] < 0
-    ):
-        errors.append("Core loss must be zero or greater.")
-    if (
-        not math.isfinite(values["full_load_copper_loss_w"])
-        or values["full_load_copper_loss_w"] < 0
-    ):
-        errors.append("Full-load copper loss must be zero or greater.")
-
-    return errors
-
-
-def efficiency_at_load(
-    transformer: dict[str, float], load_fraction: float
-) -> float:
-    performance = calculate_performance(
-        rating_kva=transformer["rating_kva"],
-        load_fraction=load_fraction,
-        power_factor=transformer["power_factor"],
-        core_loss_w=transformer["core_loss_w"],
-        full_load_copper_loss_w=transformer["full_load_copper_loss_w"],
-    )
-    efficiency_pct = performance["efficiency_pct"]
-    return float(efficiency_pct) if efficiency_pct is not None else np.nan
-
-
-for input_key, default_value in DEFAULTS.items():
-    if input_key not in st.session_state:
-        st.session_state[input_key] = default_value
-
-
-st.markdown(
-    """
-    <section class="hero">
-      <div class="kicker">POWER SYSTEMS / ANALYTICS</div>
-      <div class="hero-title">Transformer Performance Analyzer</div>
-      <p class="hero-sub">Model operating performance, compare losses, and identify efficient loading conditions.</p>
-      <span class="pill">● CALCULATION ENGINE ONLINE</span>
-    </section>
-    """,
-    unsafe_allow_html=True,
-)
-
-if st.button("Reset to default values", type="secondary"):
-    for input_key, default_value in DEFAULTS.items():
-        st.session_state[input_key] = default_value
-    st.rerun()
-
-
-def render_transformer_inputs(
-    column: Any, transformer_label: str, key_suffix: str
-) -> dict[str, float]:
-    with column:
-        st.subheader(transformer_label)
-        st.caption("Enter nameplate rating and loss-test values.")
-        rating_kva = st.number_input(
-            "Transformer rating (kVA)",
-            min_value=0.0,
-            max_value=200_000.0,
-            step=1.0,
-            key=f"rating_{key_suffix}_kva",
-            help="Use the transformer's rated apparent power.",
-        )
-        load_pct = st.number_input(
-            "Load percentage (%)",
-            min_value=0.0,
-            max_value=200.0,
-            step=1.0,
-            key=f"load_{key_suffix}_pct",
-            help="Values above 100% represent overload operation.",
-        )
-        power_factor = st.number_input(
-            "Power factor",
-            min_value=0.0,
-            max_value=1.0,
-            step=0.01,
-            format="%.2f",
-            key=f"pf_{key_suffix}",
-            help="Real power factor, from 0 to 1.",
-        )
-        core_loss_w = st.number_input(
-            "Iron / core losses (W)",
-            min_value=0.0,
-            max_value=10_000_000.0,
-            step=10.0,
-            key=f"core_{key_suffix}_w",
-            help="Approximately constant no-load loss.",
-        )
-        full_load_copper_loss_w = st.number_input(
-            "Full-load copper losses (W)",
-            min_value=0.0,
-            max_value=10_000_000.0,
-            step=10.0,
-            key=f"copper_{key_suffix}_w",
-            help="Load-dependent winding loss at rated current.",
-        )
-
-    return {
-        "rating_kva": float(rating_kva),
-        "load_pct": float(load_pct),
-        "power_factor": float(power_factor),
-        "core_loss_w": float(core_loss_w),
-        "full_load_copper_loss_w": float(full_load_copper_loss_w),
-    }
-
-
-st.subheader("Operating inputs")
-input_columns = st.columns(2, gap="large")
-transformer_inputs = {
-    "Transformer A": render_transformer_inputs(
-        input_columns[0], "Transformer A", "a"
-    ),
-    "Transformer B": render_transformer_inputs(
-        input_columns[1], "Transformer B", "b"
-    ),
-}
-
-valid_transformers: dict[str, dict[str, float]] = {}
-for transformer_name, values in transformer_inputs.items():
-    validation_values = {
-        "rating_kva": values["rating_kva"],
-        "load_pct": values["load_pct"],
-        "power_factor": values["power_factor"],
-        "core_loss_w": values["core_loss_w"],
-        "full_load_copper_loss_w": values["full_load_copper_loss_w"],
-    }
-    errors = validate_transformer_inputs(validation_values)
-    if errors:
-        st.error(
-            f"{transformer_name}: " + " ".join(errors),
-            icon="⚠️",
-        )
+elif page == "Comparison Studio":
+    st.subheader("Side-by-side performance")
+    if valid_a and valid_b:
+        show_metrics(res_a, "A"); show_metrics(res_b, "B")
+        rows = []
+        for key, label, unit in [
+            ("rating_kva","Rated capacity","kVA"), ("load_pct","Operating load","%"),
+            ("pf","Power factor",""), ("output_kw","Output power","kW"),
+            ("core_w","Core losses","W"), ("copper_w","Copper losses at selected load","W"),
+            ("total_w","Total losses","W"), ("efficiency_pct","Efficiency","%"),
+        ]:
+            va, vb = res_a.get(key), res_b.get(key)
+            diff = (vb-va) if va is not None and vb is not None else None
+            rows.append({"Parameter":label, "Transformer A":va, "Transformer B":vb, "B − A":diff, "Unit":unit})
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        fig = efficiency_plot(raw_a, raw_b, 200)
+        st.pyplot(fig, use_container_width=True); plt.close(fig)
+        st.caption("Comparison is based on the selected inputs; a larger transformer is not automatically better for every duty.")
     else:
-        valid_transformers[transformer_name] = values
+        st.warning("Please enter valid inputs for both transformers on the Performance Calculator page.")
 
+elif page == "Load Analysis Lab":
+    st.subheader("Explore performance across loading conditions")
+    max_load = st.slider("Maximum load to display (%)", min_value=50, max_value=200, value=150, step=10)
+    selected_load = st.slider("Inspect a specific load (%)", min_value=0, max_value=200, value=int(raw_a["load_pct"]), step=5)
+    loads = np.linspace(0, max_load, int(max_load / 5) + 1)
+    chosen = []
+    if valid_a: chosen.append(("Transformer A", raw_a))
+    if valid_b: chosen.append(("Transformer B", raw_b))
+    if chosen:
+        rows = []
+        for name, v in chosen:
+            p = calculate(v["rating_kva"], selected_load, v["pf"], v["core_w"], v["full_cu_w"])
+            rows.append({"Transformer":name, "Load (%)":selected_load, "Output (kW)":p["output_kw"],
+                         "Copper loss (W)":p["copper_w"], "Total loss (W)":p["total_w"], "Efficiency (%)":p["efficiency_pct"]})
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        fig, ax = plt.subplots(figsize=(9, 4.3))
+        for name, v in chosen:
+            sweep = make_sweep(v, loads)
+            ax.plot(sweep["Load (%)"], sweep["Copper loss (W)"], linewidth=2.4, label=f"{name} copper loss")
+        ax.set_title("Copper loss vs. load", loc="left", fontweight="bold")
+        ax.set_xlabel("Load (%)"); ax.set_ylabel("Copper loss (W)"); ax.grid(True, alpha=.22); ax.legend(frameon=False)
+        fig.tight_layout(); st.pyplot(fig, use_container_width=True); plt.close(fig)
+        fig = efficiency_plot(raw_a if valid_a else None, raw_b if valid_b else None, max_load)
+        st.pyplot(fig, use_container_width=True); plt.close(fig)
+        st.caption("The model extrapolates the square-law copper-loss relationship up to 200% load for exploration. This is not a recommendation to overload a transformer.")
 
-if valid_transformers:
-    performance_by_transformer: dict[str, dict[str, Any]] = {}
-    for transformer_name, values in valid_transformers.items():
-        performance_by_transformer[transformer_name] = calculate_performance(
-            rating_kva=values["rating_kva"],
-            load_fraction=values["load_pct"] / 100,
-            power_factor=values["power_factor"],
-            core_loss_w=values["core_loss_w"],
-            full_load_copper_loss_w=values["full_load_copper_loss_w"],
-        )
+elif page == "Energy & Cost":
+    st.subheader("Estimate the cost of transformer losses")
+    c1, c2, c3 = st.columns(3)
+    hours_day = c1.number_input("Operating hours per day", min_value=0.0, max_value=24.0, value=24.0, step=1.0)
+    days_year = c2.number_input("Operating days per year", min_value=0, max_value=366, value=365, step=1)
+    tariff = c3.number_input("Electricity tariff (₹/kWh)", min_value=0.0, max_value=100000.0, value=8.0, step=0.5)
+    selected = st.selectbox("Transformer to analyse", ["Transformer A", "Transformer B"])
+    r = res_a if selected == "Transformer A" else res_b
+    if r:
+        annual_hours = hours_day * days_year
+        annual_kwh = r["total_kw"] * annual_hours
+        annual_cost = annual_kwh * tariff
+        a, b, c = st.columns(3)
+        a.metric("Estimated loss energy / year", f"{annual_kwh:,.1f} kWh")
+        b.metric("Estimated loss cost / year", f"₹{annual_cost:,.2f}")
+        c.metric("Operating hours / year", f"{annual_hours:,.0f} h")
+        st.info("Estimate assumes the selected operating load and calculated losses remain constant for all entered operating hours. Real annual cost varies with load profile, voltage, temperature, tariff structure and auxiliary losses.")
+        st.markdown("#### Cost sensitivity")
+        tariffs = np.linspace(0, max(1, tariff * 2), 30)
+        fig, ax = plt.subplots(figsize=(8, 3.8))
+        ax.plot(tariffs, r["total_kw"] * annual_hours * tariffs, linewidth=2.5)
+        ax.axvline(tariff, linestyle=":", alpha=.65)
+        ax.set_xlabel("Electricity tariff (₹/kWh)"); ax.set_ylabel("Estimated annual loss cost (₹)")
+        ax.set_title("Annual loss cost vs. electricity tariff", loc="left", fontweight="bold")
+        ax.grid(True, alpha=.22); fig.tight_layout(); st.pyplot(fig, use_container_width=True); plt.close(fig)
 
-    st.subheader("Current operating point")
-    for transformer_name, performance in performance_by_transformer.items():
-        st.markdown(f"**{transformer_name}**")
-        metric_columns = st.columns(5)
-        max_load_value = performance["max_efficiency_load_pct"]
-        max_load_display = (
-            f"{max_load_value:,.1f}%"
-            if max_load_value is not None
-            else performance["max_efficiency_note"]
-        )
-        efficiency_value = performance["efficiency_pct"]
-        efficiency_display = (
-            f"{efficiency_value:,.2f}%"
-            if efficiency_value is not None
-            else "Not defined"
-        )
+elif page == "Reports":
+    st.subheader("Export your current analysis")
+    report_results = {}
+    if valid_a: report_results["Transformer A"] = res_a
+    if valid_b: report_results["Transformer B"] = res_b
+    if not report_results:
+        st.warning("Enter valid transformer values first.")
+    else:
+        rows = []
+        for name, r in report_results.items():
+            rows.append({"Transformer":name, "Rating (kVA)":r["rating_kva"], "Load (%)":r["load_pct"],
+                         "Power factor":r["pf"], "Output (kW)":r["output_kw"], "Core loss (W)":r["core_w"],
+                         "Copper loss (W)":r["copper_w"], "Total loss (W)":r["total_w"],
+                         "Efficiency (%)":r["efficiency_pct"], "Max-efficiency load (%)":r["max_load_pct"]})
+        df = pd.DataFrame(rows)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.download_button("Download results as CSV", data=df.to_csv(index=False).encode("utf-8"),
+                           file_name="transformer_performance_results.csv", mime="text/csv", type="primary")
+        pdf = pdf_report(report_results, "This report uses user-entered values and a simplified steady-state loss model. It is for education and preliminary analysis only; it is not a physical test report or certified engineering assessment.")
+        if pdf:
+            st.download_button("Download summary as PDF", data=pdf, file_name="transformer_performance_report.pdf", mime="application/pdf")
+        else:
+            st.warning("PDF export requires the reportlab package. Add reportlab to requirements.txt and redeploy.")
+        st.caption("Reports show calculated estimates, not measured data.")
 
-        metric_columns[0].metric(
-            "Output power", f"{performance['output_kw']:,.2f} kW"
-        )
-        metric_columns[1].metric(
-            "Copper losses", f"{performance['copper_loss_w']:,.1f} W"
-        )
-        metric_columns[2].metric(
-            "Total losses", f"{performance['total_loss_w']:,.1f} W"
-        )
-        metric_columns[3].metric("Efficiency", efficiency_display)
-        metric_columns[4].metric("Maximum-efficiency load", max_load_display)
+elif page == "Learn":
+    st.subheader("Transformer concepts")
+    with st.expander("1. What is transformer efficiency?", expanded=True):
+        st.write("Efficiency is the ratio of useful real output power to input real power, expressed as a percentage. In this simplified model, input power equals output power plus the estimated core and copper losses.")
+        st.latex(r"\\eta=\\frac{P_{out}}{P_{out}+P_{loss}}\\times100")
+    with st.expander("2. Core losses"):
+        st.write("Core losses mainly comprise hysteresis and eddy-current losses. They are treated as approximately constant when supply voltage and frequency remain constant.")
+    with st.expander("3. Copper losses"):
+        st.write("Winding copper losses follow I²R. Under the simplified model, current scales with load, so copper loss scales with the square of load fraction.")
+        st.latex(r"P_{cu}=P_{cu,FL}L^2")
+    with st.expander("4. Maximum-efficiency condition"):
+        st.write("For the simplified loss model, maximum efficiency occurs when core loss equals copper loss.")
+        st.latex(r"L_{max\\eta}=\\sqrt{\\frac{P_{core}}{P_{cu,FL}}}")
+    with st.expander("5. Units"):
+        st.write("kVA is apparent power; kW is real power; W is power or loss; kWh is energy. Power factor is a dimensionless value between 0 and 1.")
+    st.warning("Educational tool: validate calculations against textbook examples, manufacturer data or laboratory measurements before any real engineering decision.")
 
-        if performance["max_efficiency_note"]:
-            st.caption(performance["max_efficiency_note"] + ".")
-
-    st.subheader("Efficiency versus load")
-    plt.rcParams.update({
-        "figure.facecolor": "#101a2b",
-        "axes.facecolor": "#101a2b",
-        "axes.edgecolor": "#526783",
-        "axes.labelcolor": "#c8d8ed",
-        "xtick.color": "#a9bbd3",
-        "ytick.color": "#a9bbd3",
-        "text.color": "#edf4ff",
-        "grid.color": "#344963",
-        "legend.facecolor": "#142239",
-        "legend.edgecolor": "#314765",
-    })
-    efficiency_figure, efficiency_axes = plt.subplots(figsize=(10, 5))
-    line_colors = {
-        "Transformer A": "#54a6ff",
-        "Transformer B": "#35d6e8",
-    }
-
-    for transformer_name, values in valid_transformers.items():
-        efficiencies = [
-            efficiency_at_load(values, load_pct / 100)
-            for load_pct in PLOT_LOAD_LEVELS_PCT
-        ]
-        color = line_colors[transformer_name]
-        efficiency_axes.plot(
-            PLOT_LOAD_LEVELS_PCT,
-            efficiencies,
-            label=transformer_name,
-            linewidth=2.5,
-            color=color,
-        )
-        current_performance = performance_by_transformer[transformer_name]
-        current_efficiency = current_performance["efficiency_pct"]
-        if current_efficiency is not None:
-            efficiency_axes.scatter(
-                [values["load_pct"]],
-                [current_efficiency],
-                color=color,
-                edgecolor="white",
-                linewidth=1.2,
-                s=70,
-                zorder=3,
-            )
-
-        max_load = current_performance["max_efficiency_load_pct"]
-        if max_load is not None and 0 <= max_load <= 200:
-            efficiency_axes.axvline(
-                max_load,
-                color=color,
-                linestyle=":",
-                linewidth=1,
-                alpha=0.7,
-            )
-
-    efficiency_axes.set_xlim(0, 200)
-    efficiency_axes.set_ylim(0, 102)
-    efficiency_axes.set_xlabel("Load (%)")
-    efficiency_axes.set_ylabel("Efficiency (%)")
-    efficiency_axes.set_title("Efficiency across the operating range")
-    efficiency_axes.grid(True, linestyle="--", alpha=0.3)
-    efficiency_axes.legend()
-    efficiency_figure.tight_layout()
-    st.pyplot(efficiency_figure, clear_figure=True)
-    plt.close(efficiency_figure)
-    st.caption(
-        "Dots mark each transformer's selected operating point. Dotted "
-        "vertical lines show the theoretical maximum-efficiency load when "
-        "a finite value exists."
-    )
-
-    st.subheader("Loss breakdown at the selected load")
-    loss_figure, loss_axes = plt.subplots(figsize=(8, 4.5))
-    transformer_names = list(valid_transformers.keys())
-    positions = np.arange(len(transformer_names), dtype=float)
-    bar_width = 0.34
-    core_losses = [
-        performance_by_transformer[name]["core_loss_w"]
-        for name in transformer_names
-    ]
-    copper_losses = [
-        performance_by_transformer[name]["copper_loss_w"]
-        for name in transformer_names
-    ]
-    loss_axes.bar(
-        positions - bar_width / 2,
-        core_losses,
-        width=bar_width,
-        label="Iron / core loss",
-        color="#54a6ff",
-    )
-    loss_axes.bar(
-        positions + bar_width / 2,
-        copper_losses,
-        width=bar_width,
-        label="Copper loss at selected load",
-        color="#35d6e8",
-    )
-    loss_axes.set_xticks(positions, transformer_names)
-    loss_axes.set_ylabel("Losses (W)")
-    loss_axes.set_title("Core and load-dependent copper losses")
-    loss_axes.grid(axis="y", linestyle="--", alpha=0.3)
-    loss_axes.legend()
-    loss_figure.tight_layout()
-    st.pyplot(loss_figure, clear_figure=True)
-    plt.close(loss_figure)
-
-    st.subheader("Performance at different load levels")
-    sweep_rows: list[dict[str, Any]] = []
-    for load_pct in LOAD_LEVELS_PCT:
-        row: dict[str, Any] = {"Load level (%)": int(load_pct)}
-        for transformer_name, values in valid_transformers.items():
-            performance = calculate_performance(
-                rating_kva=values["rating_kva"],
-                load_fraction=float(load_pct) / 100,
-                power_factor=values["power_factor"],
-                core_loss_w=values["core_loss_w"],
-                full_load_copper_loss_w=values["full_load_copper_loss_w"],
-            )
-            row[f"{transformer_name} output (kW)"] = performance["output_kw"]
-            row[f"{transformer_name} efficiency (%)"] = (
-                performance["efficiency_pct"]
-            )
-        sweep_rows.append(row)
-
-    sweep_table = pd.DataFrame(sweep_rows)
-    st.dataframe(
-        sweep_table,
-        width="stretch",
-        hide_index=True,
-        column_config={
-            "Load level (%)": st.column_config.NumberColumn(
-                "Load level", format="%d%%"
-            ),
-            **{
-                column_name: st.column_config.NumberColumn(
-                    column_name,
-                    format="%.2f",
-                )
-                for column_name in sweep_table.columns
-                if column_name != "Load level (%)"
-            },
-        },
-    )
-else:
-    st.warning("Enter a valid transformer rating to view calculated results.")
-
-
-with st.expander("Formulas and engineering notes"):
-    st.markdown(
-        r"""
-**Load fraction**
-
-\[
-L = \frac{\text{Load percentage}}{100}
-\]
-
-**Real output power**
-
-\[
-P_{\text{out}}(\mathrm{kW}) =
-S_{\text{rated}}(\mathrm{kVA}) \times L \times \mathrm{PF}
-\]
-
-**Copper loss at the selected load**
-
-\[
-P_{\text{cu}}(\mathrm{W}) =
-P_{\text{cu,FL}} \times L^2
-\]
-
-**Total losses and efficiency**
-
-\[
-P_{\text{loss}} = P_{\text{core}} + P_{\text{cu}}
-\]
-
-\[
-\eta(\%) =
-\frac{P_{\text{out}}(\mathrm{W})}
-{P_{\text{out}}(\mathrm{W}) + P_{\text{loss}}(\mathrm{W})}
-\times 100
-\]
-
-Output power is converted from kW to W before calculating efficiency.
-Core loss is treated as constant; copper loss varies with the square of
-load. The theoretical maximum-efficiency load occurs when core and copper
-losses are equal:
-
-\[
-L_{\max\eta} =
-\sqrt{\frac{P_{\text{core}}}{P_{\text{cu,FL}}}}
-\]
-
-If both losses are zero, efficiency is 100% at any positive real output,
-while efficiency at zero output and the maximum-efficiency load are
-undefined. If full-load copper loss is zero but core loss is positive,
-there is no finite maximum-efficiency load under this simplified model.
-"""
-    )
-
-st.caption(
-    "Engineering estimates assume sinusoidal steady-state operation and "
-    "the loss values supplied by the user. Results do not include auxiliary "
-    "or temperature-correction losses."
-)
+st.markdown("---")
+st.markdown('<div class="small-muted">GRIDLAB · Transformer Performance Analyzer v2.0 · Estimates based on user-entered values; not live monitoring.</div>', unsafe_allow_html=True)
