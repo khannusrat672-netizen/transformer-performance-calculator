@@ -11,31 +11,35 @@ st.set_page_config(
     page_title="GridLab | Transformer Analyzer",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
-# ---------------------- Premium adaptive engineering UI ----------------------
+# ---------------------- Neon engineering interface ----------------------
 if "ui_theme" not in st.session_state:
-    st.session_state["ui_theme"] = "Dark"
+    st.session_state["ui_theme"] = "Neon"
+if "started" not in st.session_state:
+    st.session_state["started"] = False
+if "active_page" not in st.session_state:
+    st.session_state["active_page"] = "Overview"
 
 THEMES = {
-    "Dark": {
-        "bg": "#080d18", "panel": "#101a2b", "panel2": "#142239", "border": "#273b58",
-        "text": "#eef5ff", "body": "#d3deef", "muted": "#9db0cb", "blue": "#54a6ff",
-        "cyan": "#35d6e8", "header": "rgba(8,13,24,.94)", "sidebar": "#0e192b",
-        "hero": "linear-gradient(115deg,#142d4d,#0d1a2c)", "input": "#111d30", "plot": "#101a2b",
-        "grid": "#344863", "pill": "rgba(53,214,232,.12)", "shadow": "rgba(0,0,0,.2)"
+    "Neon": {
+        "bg": "#070b16", "panel": "#0d1628", "panel2": "#111f37", "border": "#233c60",
+        "text": "#f3f8ff", "body": "#c9d8ef", "muted": "#8fa8c9", "blue": "#7c8cff",
+        "cyan": "#32f5e6", "header": "rgba(7,11,22,.94)", "sidebar": "#091225",
+        "hero": "linear-gradient(115deg,#101e3d 0%,#0b2637 55%,#10152e 100%)", "input": "#101c31", "plot": "#0d1628",
+        "grid": "#263c5a", "pill": "rgba(50,245,230,.10)", "shadow": "rgba(0,0,0,.28)"
     },
     "Light": {
-        "bg": "#f4f7fb", "panel": "#ffffff", "panel2": "#edf4ff", "border": "#e0e7f0",
-        "text": "#172033", "body": "#344054", "muted": "#667085", "blue": "#2563eb",
-        "cyan": "#0891b2", "header": "rgba(244,247,251,.96)", "sidebar": "#ffffff",
-        "hero": "linear-gradient(115deg,#ffffff,#eaf3ff)", "input": "#ffffff", "plot": "#ffffff",
-        "grid": "#d7dfeb", "pill": "#e8f1ff", "shadow": "rgba(16,24,40,.045)"
+        "bg": "#f4f7fc", "panel": "#ffffff", "panel2": "#edf4ff", "border": "#d9e4f2",
+        "text": "#15213a", "body": "#34445e", "muted": "#667994", "blue": "#5b4bff",
+        "cyan": "#008eaa", "header": "rgba(244,247,252,.96)", "sidebar": "#ffffff",
+        "hero": "linear-gradient(115deg,#ffffff 0%,#eaf2ff 55%,#e6fbff 100%)", "input": "#ffffff", "plot": "#ffffff",
+        "grid": "#d7e0ed", "pill": "#e3f8fa", "shadow": "rgba(16,24,40,.06)"
     }
 }
 T = THEMES[st.session_state["ui_theme"]]
-DARK = st.session_state["ui_theme"] == "Dark"
+NEON = st.session_state["ui_theme"] == "Neon"
 plt.rcParams.update({
     "figure.facecolor": T["plot"], "axes.facecolor": T["plot"],
     "axes.edgecolor": T["grid"], "axes.labelcolor": T["body"],
@@ -43,46 +47,7 @@ plt.rcParams.update({
     "grid.color": T["grid"], "legend.labelcolor": T["body"]
 })
 
-st.markdown(f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-:root {{ --bg:{T['bg']}; --panel:{T['panel']}; --panel2:{T['panel2']}; --border:{T['border']}; --text:{T['text']}; --body:{T['body']}; --muted:{T['muted']}; --blue:{T['blue']}; --cyan:{T['cyan']}; }}
-html, body, [class*="css"] {{ font-family: Inter, "Segoe UI", sans-serif; }}
-.stApp {{ background: radial-gradient(ellipse at 78% 0%, {('rgba(28,105,180,.17)' if DARK else 'rgba(37,99,235,.07)')}, transparent 35%), var(--bg); color:var(--text); }}
-[data-testid="stHeader"] {{ background:{T['header']}; }}
-.block-container {{ max-width:1500px; padding-top:1.5rem; padding-bottom:3rem; }}
-h1,h2,h3 {{ color:var(--text) !important; letter-spacing:-.03em; }}
-h1 {{ font-size:2.1rem !important; font-weight:800 !important; }}
-h2 {{ font-size:1.42rem !important; font-weight:750 !important; }}
-h3 {{ font-size:1.06rem !important; font-weight:700 !important; }}
-p, label, li, [data-testid="stMarkdownContainer"] {{ color:var(--body); }}
-[data-testid="stCaptionContainer"] {{ color:var(--muted); }}
-[data-testid="stSidebar"] {{ background:linear-gradient(180deg,{T['sidebar']},var(--bg)); border-right:1px solid var(--border); }}
-[data-testid="stSidebar"] * {{ color:var(--body); }}
-[data-testid="stMetric"] {{ background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:17px; padding:17px 18px; box-shadow:0 8px 26px {T['shadow']}; min-height:112px; transition:transform .18s ease,border-color .18s ease; }}
-[data-testid="stMetric"]:hover {{ transform:translateY(-2px); border-color:var(--blue); }}
-[data-testid="stMetricLabel"] {{ color:var(--muted) !important; font-size:.82rem; }}
-[data-testid="stMetricValue"] {{ color:var(--blue) !important; font-weight:800 !important; }}
-[data-testid="stMetricDelta"] {{ color:#18a879 !important; }}
-div[data-testid="stVerticalBlockBorderWrapper"] {{ background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:1rem; box-shadow:0 5px 20px {T['shadow']}; }}
-.hero {{ background:{T['hero']}; border:1px solid var(--border); border-radius:22px; padding:25px 28px; margin-bottom:1.1rem; box-shadow:0 14px 36px {T['shadow']}; }}
-.eyebrow {{ color:var(--cyan); font-size:.73rem; letter-spacing:.16em; font-weight:800; text-transform:uppercase; }}
-.hero-title {{ color:var(--text); font-size:2rem; line-height:1.15; font-weight:800; letter-spacing:-.04em; margin:.4rem 0 .55rem; }}
-.hero-sub {{ color:var(--muted); font-size:.96rem; max-width:900px; }}
-.pill {{ display:inline-block; padding:5px 10px; border-radius:999px; background:{T['pill']}; color:var(--blue); border:1px solid var(--border); font-size:.75rem; font-weight:700; margin-right:5px; margin-top:8px; }}
-div.stButton > button, div.stDownloadButton > button {{ border-radius:10px; font-weight:700; border:1px solid var(--border); transition:all .18s ease; }}
-div.stButton > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {{ background:linear-gradient(135deg,#1677ff,#00aeca); color:#fff !important; border-color:transparent; }}
-div.stButton > button:hover, div.stDownloadButton > button:hover {{ border-color:var(--blue); box-shadow:0 0 20px rgba(49,130,246,.16); }}
-input, textarea {{ background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; border-radius:10px !important; }}
-[data-baseweb="select"] > div {{ background:var(--panel); border-color:var(--border); border-radius:10px; }}
-[data-testid="stDataFrame"], [data-testid="stTable"] {{ border:1px solid var(--border); border-radius:12px; overflow:hidden; }}
-[data-testid="stExpander"] {{ background:var(--panel); border:1px solid var(--border); border-radius:13px; }}
-[data-testid="stAlert"] {{ border-radius:12px; }}
-hr {{ border-color:var(--border) !important; }}
-a {{ color:var(--blue) !important; }}
-.small-muted {{ color:var(--muted); font-size:.84rem; }}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(f""" <style> @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'); :root {{ --bg:{T['bg']}; --panel:{T['panel']}; --panel2:{T['panel2']}; --border:{T['border']}; --text:{T['text']}; --body:{T['body']}; --muted:{T['muted']}; --blue:{T['blue']}; --cyan:{T['cyan']}; }} html, body, [class*="css"] {{ font-family: Inter, "Segoe UI", sans-serif; }} .stApp {{ background: radial-gradient(ellipse at 82% 2%, {('rgba(50,245,230,.12)' if NEON else 'rgba(91,75,255,.07)')}, transparent 28%), radial-gradient(ellipse at 5% 25%, {('rgba(91,75,255,.12)' if NEON else 'rgba(0,142,170,.05)')}, transparent 30%), var(--bg); color:var(--text); }} [data-testid="stHeader"] {{ background:{T['header']}; }} .block-container {{ max-width:1500px; padding-top:1.15rem; padding-bottom:3rem; }} h1,h2,h3 {{ color:var(--text) !important; letter-spacing:-.03em; }} h1 {{ font-size:2.1rem !important; font-weight:800 !important; }} h2 {{ font-size:1.42rem !important; font-weight:750 !important; }} h3 {{ font-size:1.06rem !important; font-weight:700 !important; }} p, label, li, [data-testid="stMarkdownContainer"] {{ color:var(--body); }} [data-testid="stCaptionContainer"] {{ color:var(--muted); }} [data-testid="stSidebar"] {{ background:linear-gradient(180deg,{T['sidebar']},var(--bg)); border-right:1px solid var(--border); }} [data-testid="stSidebar"] * {{ color:var(--body); }} [data-testid="stMetric"] {{ background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:17px; padding:17px 18px; box-shadow:0 8px 26px {T['shadow']}; min-height:112px; transition:transform .18s ease,border-color .18s ease; }} [data-testid="stMetric"]:hover {{ transform:translateY(-2px); border-color:var(--cyan); box-shadow:0 0 22px {('rgba(50,245,230,.10)' if NEON else 'rgba(91,75,255,.08)')}; }} [data-testid="stMetricLabel"] {{ color:var(--muted) !important; font-size:.82rem; }} [data-testid="stMetricValue"] {{ color:var(--cyan) !important; font-weight:800 !important; }} [data-testid="stMetricDelta"] {{ color:#18c79a !important; }} div[data-testid="stVerticalBlockBorderWrapper"] {{ background:var(--panel); border:1px solid var(--border); border-radius:17px; padding:1rem; box-shadow:0 5px 20px {T['shadow']}; }} .hero {{ background:{T['hero']}; border:1px solid var(--border); border-radius:22px; padding:27px 30px; margin-bottom:1.1rem; box-shadow:0 10px 34px {T['shadow']}; position:relative; overflow:hidden; }} .hero:after {{ content:""; position:absolute; right:-55px; top:-70px; width:220px; height:220px; border:1px solid {T['cyan']}; border-radius:50%; opacity:.14; box-shadow:0 0 0 24px rgba(50,245,230,.025),0 0 0 48px rgba(50,245,230,.02); pointer-events:none; }} .eyebrow {{ color:var(--cyan); font-size:.73rem; letter-spacing:.18em; font-weight:800; text-transform:uppercase; }} .hero-title {{ color:var(--text); font-size:2.15rem; line-height:1.13; font-weight:800; letter-spacing:-.045em; margin:.45rem 0 .6rem; }} .hero-sub {{ color:var(--muted); font-size:.96rem; max-width:900px; }} .pill {{ display:inline-block; padding:5px 10px; border-radius:999px; background:{T['pill']}; color:var(--cyan); border:1px solid var(--border); font-size:.75rem; font-weight:700; margin-right:5px; margin-top:8px; }} .landing {{ padding:3rem 1rem 2rem; }} .landing-title {{ font-size:clamp(2.4rem,6vw,4.8rem); line-height:1.02; font-weight:800; letter-spacing:-.06em; color:var(--text); margin:.6rem 0 1rem; }} .neon-word {{ color:var(--cyan); text-shadow:{('0 0 24px rgba(50,245,230,.25)' if NEON else 'none')}; }} .landing-copy {{ color:var(--muted); font-size:1.08rem; max-width:760px; line-height:1.75; }} .feature-card {{ height:100%; padding:1.1rem; border:1px solid var(--border); border-radius:16px; background:linear-gradient(145deg,var(--panel2),var(--panel)); }} .feature-num {{ color:var(--cyan); font-size:.75rem; font-weight:800; letter-spacing:.14em; }} div.stButton > button, div.stDownloadButton > button {{ border-radius:11px; font-weight:700; border:1px solid var(--border); min-height:2.7rem; transition:all .18s ease; }} div.stButton > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {{ background:linear-gradient(120deg,#655cff,#00bfc9); color:#fff !important; border-color:transparent; box-shadow:0 0 18px {('rgba(50,245,230,.13)' if NEON else 'rgba(91,75,255,.10)')}; }} div.stButton > button:hover, div.stDownloadButton > button:hover {{ border-color:var(--cyan); box-shadow:0 0 20px rgba(50,245,230,.15); }} input, textarea {{ background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; border-radius:10px !important; }} [data-baseweb="select"] > div {{ background:var(--panel); border-color:var(--border); border-radius:10px; }} [data-testid="stDataFrame"], [data-testid="stTable"] {{ border:1px solid var(--border); border-radius:12px; overflow:hidden; }} [data-testid="stExpander"] {{ background:var(--panel); border:1px solid var(--border); border-radius:13px; }} [data-testid="stAlert"] {{ border-radius:12px; }} hr {{ border-color:var(--border) !important; }} a {{ color:var(--cyan) !important; }} .small-muted {{ color:var(--muted); font-size:.84rem; }} </style> """, unsafe_allow_html=True)
 
 # ---------------------- Calculations ----------------------
 DEFAULTS = {
@@ -229,30 +194,53 @@ def pdf_report(report_rows, notes):
     except ImportError:
         return None
 
-# ---------------------- Navigation ----------------------
+# ---------------------- Landing page and workspace navigation ----------------------
+# Appearance control is kept in the top-right area, not in the sidebar.
+head_left, head_right = st.columns([7, 1.5])
+with head_left:
+    st.markdown(f"<div class='eyebrow'>GRIDLAB / TRANSFORMER INTELLIGENCE</div>", unsafe_allow_html=True)
+with head_right:
+    selected_theme = st.selectbox("Appearance", ["Neon", "Light"], index=["Neon", "Light"].index(st.session_state["ui_theme"]), key="theme_top_right", label_visibility="collapsed")
+    if selected_theme != st.session_state["ui_theme"]:
+        st.session_state["ui_theme"] = selected_theme
+        st.rerun()
+
+PAGES = ["Overview", "Performance Calculator", "Transformer Intelligence Lab", "Comparison Studio", "Load Analysis Lab", "Energy & Cost", "Reports", "Learn"]
+if not st.session_state["started"]:
+    # The first page is deliberately a clean landing page: no workspace sidebar.
+    st.markdown(f""" <div class="landing"> <div class="pill">ENGINEERING ANALYTICS · V 3.0</div> <div class="landing-title">See beyond the<br><span class="neon-word">efficiency number.</span></div> <div class="landing-copy">A transformer performance workspace built to explore losses, test operating scenarios, compare equipment, and turn calculations into practical engineering insight.</div> <div style="margin-top:1.2rem"><span class="pill">Loss intelligence</span><span class="pill">What-if scenarios</span><span class="pill">Energy economics</span><span class="pill">Explainable results</span></div> </div> """, unsafe_allow_html=True)
+    a, b, c = st.columns(3)
+    for col, num, title, desc in [
+        (a, "01 / ANALYSE", "Performance engine", "Calculate efficiency, output power and loss components with transparent formulas."),
+        (b, "02 / EXPLORE", "Scenario fingerprint", "See how the same transformer behaves as load and power factor change."),
+        (c, "03 / DECIDE", "Engineering insights", "Get explainable observations, comparison results and estimated loss costs.")]:
+        with col:
+            st.markdown(f"<div class='feature-card'><div class='feature-num'>{num}</div><h3>{title}</h3><p>{desc}</p></div>", unsafe_allow_html=True)
+    st.write("")
+    go_left, go_btn, go_right = st.columns([1.5, 2, 1.5])
+    with go_btn:
+        if st.button("Launch Engineering Workspace →", type="primary", use_container_width=True):
+            st.session_state["started"] = True
+            st.session_state["active_page"] = "Overview"
+            st.rerun()
+    st.caption("Simulation and calculation only · No live transformer sensors are connected.")
+    st.stop()
+
 with st.sidebar:
     st.markdown("## ⚡ GRIDLAB")
-    st.caption("POWER SYSTEMS · ANALYTICS")
-    st.selectbox("APPEARANCE", ["Dark", "Light"], key="ui_theme", help="Switch the interface between dark and light mode. Changes apply immediately.")
-    st.caption("TRANSFORMER ANALYTICS")
+    st.caption("TRANSFORMER INTELLIGENCE")
     st.markdown("---")
-    page = st.radio("WORKSPACE", [
-        "Overview", "Performance Calculator", "Comparison Studio",
-        "Load Analysis Lab", "Energy & Cost", "Reports", "Learn"
-    ], label_visibility="collapsed")
+    page = st.radio("WORKSPACE", PAGES, index=PAGES.index(st.session_state["active_page"]), key="workspace_nav", label_visibility="collapsed")
+    st.session_state["active_page"] = page
     st.markdown("---")
-    st.success("Calculation engine ready")
-    st.caption("Steady-state estimate · SI units")
-    st.caption("Transformer Performance Analyzer · v2.0")
+    if st.button("← Back to start", use_container_width=True):
+        st.session_state["started"] = False
+        st.rerun()
+    st.caption("Steady-state estimates · SI units")
+    st.caption("GRIDLAB · v3.0")
 
-st.markdown(f"""
-<div class="hero">
-  <div class="eyebrow">GRIDLAB / TRANSFORMER INTELLIGENCE</div>
-  <div class="hero-title">{page}</div>
-  <div class="hero-sub">A focused engineering workspace for estimating transformer performance, understanding losses, and comparing operating conditions.</div>
-  <div style="margin-top:14px"><span class="pill">Interactive analysis</span><span class="pill">SI units</span><span class="pill">Educational estimate</span></div>
-</div>
-""", unsafe_allow_html=True)
+page = st.session_state["active_page"]
+st.markdown(f""" <div class="hero"> <div class="eyebrow">GRIDLAB / TRANSFORMER INTELLIGENCE</div> <div class="hero-title">{page}</div> <div class="hero-sub">Explore transformer performance, inspect loss behaviour, and compare operating scenarios with transparent engineering calculations.</div> <div style="margin-top:14px"><span class="pill">Explainable analysis</span><span class="pill">SI units</span><span class="pill">Simulation workspace</span></div> </div> """, unsafe_allow_html=True)
 
 raw_a, raw_b = get_transformer("A"), get_transformer("B")
 res_a, err_a = as_results(raw_a)
@@ -343,6 +331,57 @@ elif page == "Performance Calculator":
             st.write(f'Copper loss = {raw_a["full_cu_w"]:.2f} × ({raw_a["load_pct"]/100:.3f})² = {res_a["copper_w"]:.2f} W')
             st.write(f'Total losses = {raw_a["core_w"]:.2f} + {res_a["copper_w"]:.2f} = {res_a["total_w"]:.2f} W')
             st.write(f'Efficiency = {res_a["efficiency_pct"]:.3f}%' if res_a["efficiency_pct"] is not None else "Efficiency is undefined at zero output and zero loss.")
+
+elif page == "Transformer Intelligence Lab":
+    st.subheader("Transformer operating fingerprint")
+    st.caption("A scenario-based analysis that turns a single set of transformer parameters into a load-and-power-factor performance map. This is a model-based estimate, not live condition monitoring.")
+    if valid_a:
+        # Load profile scenarios use transformer A as the reference unit.
+        base = raw_a
+        lcol, pfcol = st.columns(2)
+        with lcol:
+            load_points = st.multiselect("Load points to inspect (%)", [25, 40, 50, 60, 75, 80, 90, 100, 110, 125], default=[25, 50, 75, 100])
+        with pfcol:
+            pf_points = st.multiselect("Power factors to compare", [0.70, 0.80, 0.85, 0.90, 0.95, 1.00], default=[0.80, 0.90, 1.00], format_func=lambda x: f"{x:.2f}")
+        rows = []
+        for lp in load_points:
+            for pfv in pf_points:
+                q = calculate(base["rating_kva"], float(lp), float(pfv), base["core_w"], base["full_cu_w"])
+                rows.append({"Load (%)": lp, "Power factor": pfv, "Output (kW)": q["output_kw"], "Copper loss (W)": q["copper_w"], "Total loss (W)": q["total_w"], "Efficiency (%)": q["efficiency_pct"]})
+        if rows:
+            df_fp = pd.DataFrame(rows)
+            best = df_fp.loc[df_fp["Efficiency (%)"].idxmax()]
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Best tested efficiency", f"{best['Efficiency (%)']:.3f}%")
+            m2.metric("Scenario load", f"{best['Load (%)']:.0f}%")
+            m3.metric("Scenario power factor", f"{best['Power factor']:.2f}")
+            st.dataframe(df_fp, use_container_width=True, hide_index=True)
+            fig, ax = plt.subplots(figsize=(9, 4.2))
+            for pfv in sorted(df_fp["Power factor"].unique()):
+                subset = df_fp[df_fp["Power factor"] == pfv].sort_values("Load (%)")
+                ax.plot(subset["Load (%)"], subset["Efficiency (%)"], marker="o", linewidth=2.2, label=f"PF {pfv:.2f}")
+            ax.set_title("Operating fingerprint · efficiency across scenarios", loc="left", fontweight="bold")
+            ax.set_xlabel("Load (%)"); ax.set_ylabel("Efficiency (%)"); ax.grid(True, alpha=.22); ax.legend(frameon=False)
+            fig.tight_layout(); st.pyplot(fig, use_container_width=True); plt.close(fig)
+            # Explainable rule-based observations, not a machine-learning diagnosis.
+            current = res_a
+            insights = []
+            if current["max_load_pct"] is not None:
+                insights.append(f"The simplified loss model predicts maximum efficiency near {current['max_load_pct']:.1f}% load, where core loss equals copper loss.")
+            if current["copper_w"] > current["core_w"]:
+                insights.append("At the selected operating point, copper loss exceeds core loss. Load-dependent winding loss is the larger of these two modeled components.")
+            else:
+                insights.append("At the selected operating point, core loss is at least as large as copper loss. Fixed losses are a substantial part of the modeled loss total at this load.")
+            if current["load_pct"] > 100:
+                insights.append("The selected load exceeds nameplate rating. Treat this as a mathematical scenario, not a safe operating recommendation.")
+            st.markdown("#### Explainable engineering observations")
+            for insight in insights:
+                st.info(insight)
+            st.caption("The 'best tested efficiency' is only the best among selected scenarios; it is not a universal optimum. Real transformer limits require nameplate, thermal, insulation and manufacturer data.")
+        else:
+            st.info("Select at least one load point and one power factor to generate the operating fingerprint.")
+    else:
+        st.warning("Enter valid Transformer A inputs in the Performance Calculator first.")
 
 elif page == "Comparison Studio":
     st.subheader("Side-by-side performance")
@@ -460,4 +499,4 @@ elif page == "Learn":
     st.warning("Educational tool: validate calculations against textbook examples, manufacturer data or laboratory measurements before any real engineering decision.")
 
 st.markdown("---")
-st.markdown('<div class="small-muted">GRIDLAB · Transformer Performance Analyzer v2.0 · Estimates based on user-entered values; not live monitoring.</div>', unsafe_allow_html=True)
+st.markdown('<div class="small-muted">GRIDLAB · Transformer Performance Analyzer v3.0 · Model-based estimates; not live monitoring.</div>', unsafe_allow_html=True)
